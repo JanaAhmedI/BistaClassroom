@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  {% include 'classroom/students/_header.html' with active='taken' %}
+  <div class="card">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Quiz</th>
+          <th>Subject</th>
+          <th>TWK</th>
+          <th>TIU</th>
+          <th>TKP</th>
+          <th>Total Score</th>
+          <th></th>  <!-- kolom tombol -->
+        </tr>
+      </thead>
+      <tbody>
+        {% for result in section_scores %}
+          <tr>
+            <td>{{ result.quiz_name }}</td>
+            <td>{{ result.subject|safe }}</td>
+            <td>{{ result.scores.0 }}</td>
+            <td>{{ result.scores.1 }}</td>
+            <td>{{ result.scores.2 }}</td>
+            <td><strong>{{ result.total_score }}</strong></td>
+            <td>
+              <a href="{% url 'students:view_discussion' result.quiz_id %}" class="btn btn-sm btn-outline-info">
+                📖 Lihat Pembahasan
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="bg-light text-center font-italic" colspan="7">
+              You haven't completed any quiz yet.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

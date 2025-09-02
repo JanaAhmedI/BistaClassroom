@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load custom_filters %}
+
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="mb-4">
+      <h2>{{ quiz.name }} — Pembahasan Soal</h2>
+    </div>
+
+    {% for q in quiz.questions.all %}
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header fw-bold">
+          Soal {{ forloop.counter }}
+        </div>
+        <div class="card-body">
+          <p class="lead">{{ q.text|linebreaksbr }}</p>
+
+          {% if q.image %}
+            <div class="mb-3">
+              <img src="{{ q.image.url }}" class="img-fluid rounded shadow" style="max-height: 300px;">
+            </div>
+          {% endif %}
+
+          <ul class="list-group">
+            {% for a in q.answers.all %}
+            <li class="list-group-item {% if a.is_correct %}list-group-item-success{% elif student_answer|get_item:q.id == a.id %}list-group-item-warning{% endif %}">
+                <strong>{{ a.text|linebreaksbr }}</strong>
+                {% if student_answer|get_item:q.id == a.id %}
+                <span class="badge bg-info ms-2">Jawaban Anda</span>
+                {% endif %}
+                {% if a.is_correct %}
+                <span class="badge bg-success ms-2">Benar</span>
+                {% endif %}
+                <br>
+                <small>Skor: {{ a.score }}</small>
+            </li>
+            {% endfor %}
+
+          </ul>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

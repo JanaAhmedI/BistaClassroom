@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row mb-4 justify-content-center">
+  <div class="col-md-12">
+    <div class="position-absolute top-50 start-50 translate-middle text-dark fw-bold text-center"
+        style="z-index: 10; font-size: 1.2rem; font-weight: 800;color: black; pointer-events: none; width: 100%;margin-left: -17px;margin-top: 2px;">
+      ⏳ Sisa Waktu: <span id="timer">--:--</span>
+    </div>
+
+    <div class="progress" style="height: 36px; background-color: #dee2e6; overflow: hidden;">
+      <div id="time-alert"
+           class="progress-bar d-flex justify-content-center align-items-center text-white fw-bold"
+           style="width: 100%; font-size: 1rem; transition: width 0.5s ease, background-color 0.5s ease; background-color: #28a745; margin: 0 auto;">
+        <div class="d-flex align-items-center gap-2">
+          <span style="font-size: 1.1rem;"></span>
+          <span style="opacity: 0;">Sisa Waktu: <span id="timer">--:--</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div class="row">
+  <div class="col-md-12">
+    <form method="post" id="navigation-form" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="answer" id="selected-answer">
+      <input type="hidden" name="action" id="nav-action">
+
+      <div class="progress mb-3" style="height: 30px; position: relative;">
+        <div class="progress-bar bg-info"
+            role="progressbar"
+            style="width: {{ progress }}%;">
+        </div>
+        <div class="position-absolute top-50 start-50 translate-middle text-dark fw-bold text-center"
+            style="z-index: 10; font-size: 1.2rem; font-weight: 800;color: black; pointer-events: none; width: 100%;">
+          Progress: {{ answered_question_ids|length }}/{{ quiz.questions.count }} soal
+        </div>
+      </div>
+
+      <h2 class="mb-3">{{ quiz.name }}</h2>
+      <p class="lead">{{ question.text|linebreaksbr }}</p>
+
+      {% if question.image %}
+        <div class="mb-3">
+          <img src="{{ question.image.url }}" alt="Gambar Soal"
+               style="max-height: 300px;" class="img-fluid rounded shadow">
+        </div>
+      {% endif %}
+
+      {% for answer in question.answers.all %}
+        <div class="mb-4">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="answer"
+              id="answer_{{ answer.id }}" value="{{ answer.id }}"
+              {% if selected_answer and selected_answer.id == answer.id %}checked{% endif %}>
+            <label class="form-check-label" for="answer_{{ answer.id }}">
+              {{ answer.text|linebreaksbr }}
+            </label>
+          </div>
+          {% if answer.image %}
+            <div class="mt-2">
+              <img src="{{ answer.image.url }}" alt="Gambar Jawaban"
+                  style="max-height: 150px;" class="img-thumbnail">
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <!-- Tombol navigasi bawah -->
+      <button type="submit" onclick="document.getElementById('nav-action').value='next';"
+              class="btn btn-primary">Next →</button>
+      <button type="submit" onclick="document.getElementById('nav-action').value='skip';"
+              class="btn btn-secondary">Lewati →</button>
+      <button type="button"
+              onclick="confirmFinishQuiz()"
+              class="btn btn-danger">
+        Selesai ✅
+      </button>
+
+      <!-- Navigasi Soal -->
+      <div class="card shadow-sm mt-4 mb-3 border-primary">
+        <div class="card-header bg-primary text-white text-center fw-bold">
+          🧭 Navigasi Soal
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2 justify-content-center">
+            {% for q in quiz.questions.all %}
+              <button type="button"
+                onclick="submitAnswerAndGoTo({{ q.pk }});"
+                class="btn 
+                  {% if question.pk == q.pk %}btn-primary
+                  {% elif q.pk in answered_question_ids %}btn-success
+                  {% else %}btn-outline-warning{% endif %} btn-sm"
+                style="width: 40px; margin: 2px;">
+                {{ forloop.counter }}
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  let remaining = parseInt("{{ remaining_seconds|default:0|stringformat:'d' }}");
+  const timerElement = document.getElementById('timer');
+  const form = document.getElementById("navigation-form");
+  const actionField = document.getElementById("nav-action");
+  const answerField = document.getElementById("selected-answer");
+
+  console.log("⏱️ Timer started. Remaining:", remaining);
+
+  function startCountdown() {
+    if (isNaN(remaining)) {
+      console.error("❌ remaining_seconds is NaN!");
+      return;
+    }
+
+    if (remaining <= 0) {
+      timerElement.textContent = "0:00";
+      submitTimeoutAnswer();
+      return;
+    }
+
+    const totalSeconds = parseInt("{{ quiz.duration_minutes|default:1 }}") * 60;
+    const alertBox = document.getElementById("time-alert");
+
+    const timer = setInterval(() => {
+      const minutes = Math.floor(remaining / 60);
+      const seconds = remaining % 60;
+      timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+      // 🔄 Update warna dan lebar
+      const percentage = (remaining / totalSeconds) * 100;
+      let bgColor = "#28a745"; // green
+      if (percentage <= 0.5 && percentage > 0.2) {
+        bgColor = "#fd7e14"; // orange
+      } else if (percentage <= 0.2) {
+        bgColor = "#dc3545"; // red
+      }
+      alertBox.style.backgroundColor = bgColor;
+      alertBox.style.width = `${percentage}%`;
+
+      if (remaining <= 0) {
+        clearInterval(timer);
+        submitTimeoutAnswer();
+      }
+
+      remaining--;
+    }, 1000);
+  }
+
+
+  // ✅ Fungsi global agar bisa dipanggil oleh onclick di HTML
+  window.confirmFinishQuiz = function () {
+    if (confirm("Yakin ingin menyelesaikan kuis? Jawaban yang belum dijawab akan dianggap kosong.")) {
+      const selected = document.querySelector('input[name="answer"]:checked');
+
+      if (selected && answerField) {
+        answerField.value = selected.value;
+      }
+      if (actionField) {
+        actionField.value = 'finish';
+      }
+      console.log("✅ Selesai kuis ditekan. Submit dengan jawaban:", answerField.value);
+      form.submit();
+    }
+  }
+
+  function submitTimeoutAnswer() {
+    console.log("🟡 Fungsi submitTimeoutAnswer dipanggil");
+
+    if (form.dataset.submitted === "true") {
+      console.warn("⚠️ Form already submitted. Skip duplicate.");
+      return;
+    }
+
+    form.dataset.submitted = "true";
+
+    const selected = document.querySelector('input[name="answer"]:checked');
+
+    if (actionField) {
+      actionField.value = "finish";
+    } else {
+      const fallback = document.createElement("input");
+      fallback.type = "hidden";
+      fallback.name = "action";
+      fallback.value = "finish";
+      form.appendChild(fallback);
+    }
+
+    if (selected && answerField) {
+      answerField.value = selected.value;
+      console.log("✅ Jawaban otomatis disimpan:", selected.value);
+    } else {
+      console.log("⚠️ Tidak ada jawaban dipilih.");
+    }
+
+    const overlay = document.createElement("div");
+    overlay.innerHTML = `
+      <div style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;
+                  background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;
+                  font-size:1.8rem;font-weight:bold">
+        ⏳ Waktu habis. Menyimpan jawaban...
+      </div>`;
+    document.body.appendChild(overlay);
+
+    console.log("📤 Submit form dalam 300ms...");
+
+    setTimeout(() => {
+      try {
+        form.submit();
+        console.log("📨 form.submit() dijalankan.");
+      } catch (e) {
+        console.error("❌ form.submit() error:", e);
+      }
+    }, 5000); // beri waktu 300ms sebelum submit
+  }
+
+  window.submitAnswerAndGoTo = function (questionId) {
+    const selected = document.querySelector('input[name="answer"]:checked');
+    if (selected && answerField) {
+      answerField.value = selected.value;
+    }
+    if (actionField) {
+      actionField.value = 'goto_' + questionId;
+    }
+
+    console.log("🔁 Navigasi ke soal ID:", questionId);
+    form.submit();
+  }
+
+  document.querySelectorAll('input[name="answer"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      if (answerField) {
+        answerField.value = radio.value;
+      }
+    });
+  });
+
+  startCountdown();
+});
+</script>
+
+
+{% endblock %}
+
